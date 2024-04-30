@@ -40,7 +40,7 @@ pub struct BetterStackLogger {
     module_levels: Vec<(String, LevelFilter)>,
 
     client: Client,
-    api_key: String,
+    source_token: String,
 
     /// Whether to include thread names (and IDs) or not
     ///
@@ -70,7 +70,7 @@ impl BetterStackLogger {
     ///
     /// [`init`]: #method.init
     #[must_use = "You must call init() to begin logging"]
-    pub fn new(api_key: &str) -> BetterStackLogger {
+    pub fn new(source_token: &str) -> BetterStackLogger {
         BetterStackLogger {
             default_level: LevelFilter::Trace,
             module_levels: Vec::new(),
@@ -85,7 +85,7 @@ impl BetterStackLogger {
             timestamps_format: None,
 
             client: Client::new(),
-            api_key: api_key.to_string(),     
+            source_token: source_token.to_string(),     
         }
     }
 
@@ -99,7 +99,7 @@ impl BetterStackLogger {
     ///
     /// ```no_run
     /// use betterstack_logger::BetterStackLogger;
-    /// BetterStackLogger::env().init(api_key).unwrap();
+    /// BetterStackLogger::env().init(source_token).unwrap();
     /// log::warn!("This is an example message.");
     /// ```
     /// 
@@ -320,13 +320,13 @@ impl Log for BetterStackLogger {
             let body = serde_json::to_string(&log_message).unwrap();
 
             let client = self.client.clone(); 
-            let api_key = self.api_key.clone(); 
+            let source_token = self.source_token.clone(); 
 
             // Asynchronously send log message to BetterStack API
             tokio::spawn(async move {
                 let _ = client
                     .post("https://api.betterstack.com/logs")
-                    .header("Authorization", format!("Bearer {}", api_key))
+                    .header("Authorization", format!("Bearer {}", source_token))
                     .header("Content-Type", "application/json")
                     .body(body)
                     .send()
@@ -435,7 +435,7 @@ impl Log for BetterStackLogger {
                 let _ = self
                     .client
                     .post("https://api.betterstack.com/logs")
-                    .header("Authorization", format!("Bearer {}", self.api_key))
+                    .header("Authorization", format!("Bearer {}", self.source_token))
                     .header("Content-Type", "application/json")
                     .body(body)
                     .send()
@@ -452,8 +452,8 @@ impl Log for BetterStackLogger {
 ///
 /// Log messages will not be filtered.
 /// The `RUST_LOG` environment variable is not used.
-pub fn init(api_key: &str) -> Result<(), SetLoggerError> {
-    BetterStackLogger::new(api_key).init()
+pub fn init(source_token: &str) -> Result<(), SetLoggerError> {
+    BetterStackLogger::new(source_token).init()
 }
 
 /// Initialise the logger with its default configuration.
@@ -463,21 +463,21 @@ pub fn init(api_key: &str) -> Result<(), SetLoggerError> {
 ///
 /// This function is only available if the `timestamps` feature is enabled.
 #[cfg(feature = "timestamps")]
-pub fn init_utc(api_key: &str) -> Result<(), SetLoggerError> {
-    BetterStackLogger::new(api_key).with_utc_timestamps().init()
+pub fn init_utc(source_token: &str) -> Result<(), SetLoggerError> {
+    BetterStackLogger::new(source_token).with_utc_timestamps().init()
 }
 
 /// Initialise the logger with the `RUST_LOG` environment variable.
 ///
 /// Log messages will be filtered based on the `RUST_LOG` environment variable.
-pub fn init_with_env(api_key: &str) -> Result<(), SetLoggerError> {
-    BetterStackLogger::new(api_key).env().init()
+pub fn init_with_env(source_token: &str) -> Result<(), SetLoggerError> {
+    BetterStackLogger::new(source_token).env().init()
 }
 
 /// Initialise the logger with a specific log level.
 ///
 /// Log messages below the given [`Level`] will be filtered.
 /// The `RUST_LOG` environment variable is not used.
-pub fn init_with_level(api_key: &str, level: Level) -> Result<(), SetLoggerError> {
-    BetterStackLogger::new(api_key).with_level(level.to_level_filter()).init()
+pub fn init_with_level(source_token: &str, level: Level) -> Result<(), SetLoggerError> {
+    BetterStackLogger::new(source_token).with_level(level.to_level_filter()).init()
 }
